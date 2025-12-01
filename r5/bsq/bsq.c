@@ -33,21 +33,14 @@ int	mapping(char c, t_rule rule)
 
 void	print_map(int *map, t_rule rule, int col, int rol)
 {
-	printf("col : %d, rol : %d\n", col, rol);
-	for (int x = 0; x < rol * col; ++x)
+	for (int y = 0; y < rol; ++y)
 	{
-		printf("%c", mapping(map[x], rule));
-		if (x / col)
-			printf("\n");
+		for (int x = 0; x < col; ++x)
+		{
+			printf("%c", mapping(map[y * col + x], rule));
+		}
+		printf("\n");
 	}
-	// for (int y = 0; y < rol; ++y)
-	// {
-	// 	for (int x = 0; x < col; ++x)
-	// 	{
-	// 		printf("%c", mapping(map[y * col + x], rule));
-	// 	}
-	// 	printf("\n");
-	// }
 }
 
 t_rule	find_square(int *map, int col , int rol, t_rule rule)
@@ -103,7 +96,7 @@ bool	file_read(FILE *fp)
 	if (rule.space == rule.obstacle || rule.space == rule.fill || rule.obstacle == rule.fill)
 		goto	cleanup;
 	rule.highest = -1;
-	printf("space : '%c' obs : '%c' fill : '%c' rol : '%d' col : '%d'\n", rule.space, rule.obstacle, rule.fill, rol, col);
+	// printf("space : '%c' obs : '%c' fill : '%c' rol : '%d' col : '%d'\n", rule.space, rule.obstacle, rule.fill, rol, col);
 
 	char *line = NULL;
 	size_t	lcap;
@@ -129,13 +122,16 @@ bool	file_read(FILE *fp)
 	if (line)
 		free(line);
 	free(map);
+	fclose(fp);
 	return (0);
 	cleanup:
 		if (line && *line != '\0')
 			free(line);
 		if (map)
 			free(map);
-		return (fail());
+		if (fp)
+			fclose(fp);
+		return (1);
 }
 
 int	main(int ac, char **av)
