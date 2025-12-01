@@ -9,7 +9,7 @@
 typedef struct s_rule
 {
 	char space, obstacle, fill;
-	int	highest;
+	int	highest, x, y;
 }	t_rule;
 
 bool	fail()
@@ -23,28 +23,34 @@ int	mapping(char c, t_rule rule)
 		return 1;
 	else if (c == rule.obstacle)
 		return 0;
-	else if (c == rule.highest)
-		return rule.space;
 	else if (c == 0)
 		return (rule.obstacle);
+	else if (c == rule.fill)
+		return rule.fill;
 	else
-		return rule.space;	
+		return rule.space;
 }
 
 void	print_map(int *map, t_rule rule, int col, int rol)
 {
 	printf("col : %d, rol : %d\n", col, rol);
-	for (int y = 0; y < rol; ++y)
+	for (int x = 0; x < rol * col; ++x)
 	{
-		for (int x = 0; x < col; ++x)
-		{
-			printf("%c", mapping(map[y * col + x], rule));
-		}
-		printf("\n");
+		printf("%c", mapping(map[x], rule));
+		if (x / col)
+			printf("\n");
 	}
+	// for (int y = 0; y < rol; ++y)
+	// {
+	// 	for (int x = 0; x < col; ++x)
+	// 	{
+	// 		printf("%c", mapping(map[y * col + x], rule));
+	// 	}
+	// 	printf("\n");
+	// }
 }
 
-void	find_square(int *map, int col , int rol, t_rule rule)
+t_rule	find_square(int *map, int col , int rol, t_rule rule)
 {
 	for (int y = 1; y < rol; ++y)
 	{
@@ -60,8 +66,26 @@ void	find_square(int *map, int col , int rol, t_rule rule)
 			if (dia < min)
 				min = dia;
 			map[idx] = min + 1;
+			if (map[idx] > rule.highest)
+			{
+				rule.highest = map[idx];
+				rule.x = x;
+				rule.y = y;
+			}
 		}
 	}
+	return (rule);
+}
+
+void	print_square(int *map, t_rule rule, int col, int rol)
+{
+	for (int y = rule.y - rule.highest + 1; y <= rule.y; ++y)
+	{
+		for (int x = rule.x - rule.highest + 1; x <= rule.x; ++x)
+			map[y * col + x] = rule.fill;
+	}
+	print_map(map, rule, col, rol);
+	printf("highest: %d\n", rule.highest);
 }
 
 bool	file_read(FILE *fp)
@@ -93,15 +117,18 @@ bool	file_read(FILE *fp)
 		if (col == -1 && --llen > 0)
 		{
 			col = llen;
-			map = calloc(rol * col, sizeof(char));
+			map = calloc(rol * col, sizeof(int));
 			if (!map)
 				goto	cleanup;
 		}
 		for (int x = 0; x < col; ++x)
-			map[y * rol + x] = mapping(line[x], rule);
+			map[y * col + x] = mapping(line[x], rule);
 		// printf("line: %s\n", line);
 	}
-	print_map(map, rule, col, rol);
+	print_square(map, find_square(map, col, rol, rule), col, rol);
+	if (line)
+		free(line);
+	free(map);
 	return (0);
 	cleanup:
 		if (line && *line != '\0')
